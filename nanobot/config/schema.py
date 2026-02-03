@@ -265,7 +265,7 @@ class Config(BaseSettings):
         """Get API key for the given model. Falls back to first available key."""
         p = self.get_provider(model)
         return p.api_key if p else None
-    
+
     def get_api_base(self, model: str | None = None) -> str | None:
         """Get API base URL for the given model. Applies default URLs for known gateways."""
         from nanobot.providers.registry import find_by_name
