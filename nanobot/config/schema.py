@@ -41,6 +41,7 @@ class AgentDefaults(BaseModel):
     """Default agent configuration."""
     workspace: str = "~/.nanobot/workspace"
     model: str = "anthropic/claude-opus-4-5"
+    provider: str = "litellm"  # Options: "litellm" or "openai"
     max_tokens: int = 8192
     temperature: float = 0.7
     max_tool_iterations: int = 20
