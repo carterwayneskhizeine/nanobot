@@ -118,8 +118,25 @@ class LiteLLMProvider(LLMProvider):
             model = f"openrouter/{model}"
         elif self.is_aihubmix:
             model = f"openai/{model.split('/')[-1]}"
-        elif self.is_vllm:
-            model = f"hosted_vllm/{model}"
+        
+        # For Zhipu/Z.ai, ensure prefix is present
+        # Handle cases like "glm-4.7-flash" -> "zai/glm-4.7-flash"
+        # LiteLLM uses 'zai/' for Zhipu AI models
+        if ("glm" in model.lower() or "zhipu" in model.lower()) and not (
+            model.startswith("zhipu/") or
+            model.startswith("zai/") or
+            model.startswith("openrouter/") or
+            model.startswith("hosted_vllm/")
+        ):
+            model = f"zai/{model}"
+
+        # Also convert 'zhipu/' to 'zai/' if present
+        if model.startswith("zhipu/"):
+            model = model.replace("zhipu/", "zai/", 1)
+        
+        # For vLLM, use hosted_vllm/ prefix per LiteLLM docs
+        # Convert openai/ prefix to hosted_vllm/ if user specified it
+        if self.is_vllm:
         
         # kimi-k2.5 only supports temperature=1.0
         if "kimi-k2.5" in model.lower():
