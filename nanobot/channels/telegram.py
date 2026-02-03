@@ -120,13 +120,14 @@ class TelegramChannel(BaseChannel):
             return
         
         self._running = True
-        
-        # Build the application
+
+        # Build the application with timeout and proxy support
         builder = Application.builder().token(self.config.token)
         if self.config.proxy:
             builder = builder.proxy(self.config.proxy).get_updates_proxy(self.config.proxy)
+        builder = builder.connect_timeout(self.config.timeout).pool_timeout(self.config.timeout)
         self._app = builder.build()
-        
+
         # Add command handlers
         self._app.add_handler(CommandHandler("start", self._on_start))
         self._app.add_handler(CommandHandler("reset", self._on_reset))
@@ -199,7 +200,10 @@ class TelegramChannel(BaseChannel):
             await self._app.bot.send_message(
                 chat_id=chat_id,
                 text=html_content,
-                parse_mode="HTML"
+                parse_mode="HTML",
+                read_timeout=self.config.timeout,
+                write_timeout=self.config.timeout,
+                connect_timeout=self.config.timeout
             )
         except ValueError:
             logger.error(f"Invalid chat_id: {msg.chat_id}")
@@ -209,7 +213,10 @@ class TelegramChannel(BaseChannel):
             try:
                 await self._app.bot.send_message(
                     chat_id=int(msg.chat_id),
-                    text=msg.content
+                    text=msg.content,
+                    read_timeout=self.config.timeout,
+                    write_timeout=self.config.timeout,
+                    connect_timeout=self.config.timeout
                 )
             except Exception as e2:
                 logger.error(f"Error sending Telegram message: {e2}")

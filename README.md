@@ -166,6 +166,44 @@ nanobot agent -m "Hello from my local LLM!"
 > [!TIP]
 > The `apiKey` can be any non-empty string for local servers that don't require authentication.
 
+## 🔌 OpenAI SDK 模式
+
+直接连接任何 OpenAI 兼容的 API 端点，无需通过 LiteLLM。适用于自定义模型服务、本地部署或其他兼容 OpenAI API 格式的服务。
+
+**使用场景：**
+- 使用自定义端点（如 `http://localhost:4000`）
+- 使用特殊的模型名称（如 `GLM/glm-4.7-thinking-official`）
+- 需要直接访问模型 API，跳过 LiteLLM 的抽象层
+
+**配置方式：**
+
+在 `~/.nanobot/config.json` 中设置：
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "provider": "openai",
+      "model": "GLM/glm-4.7-thinking-official"
+    }
+  },
+  "providers": {
+    "openai": {
+      "apiKey": "your-api-key",
+      "apiBase": "http://localhost:4000"
+    }
+  }
+}
+```
+
+或者运行 `nanobot onboard`，在初始化时选择 **"OpenAI SDK"** 选项。
+
+**优势：**
+- ✅ 支持任何 OpenAI 兼容的 API
+- ✅ 保留自定义模型名称（不进行转换）
+- ✅ 更低的延迟（减少 LiteLLM 抽象层）
+- ✅ 易于调试（使用官方 SDK）
+
 ## 💬 Chat Apps
 
 Talk to your nanobot through Telegram, Discord, WhatsApp, Feishu, Mochat, DingTalk, Slack, Email, or QQ — anytime, anywhere.
@@ -588,7 +626,7 @@ Config file: `~/.nanobot/config.json`
 |----------|---------|-------------|
 | `openrouter` | LLM (recommended, access to all models) | [openrouter.ai](https://openrouter.ai) |
 | `anthropic` | LLM (Claude direct) | [console.anthropic.com](https://console.anthropic.com) |
-| `openai` | LLM (GPT direct) | [platform.openai.com](https://platform.openai.com) |
+| `openai` | LLM (GPT direct or **OpenAI-compatible APIs**) | [platform.openai.com](https://platform.openai.com) |
 | `deepseek` | LLM (DeepSeek direct) | [platform.deepseek.com](https://platform.deepseek.com) |
 | `groq` | LLM + **Voice transcription** (Whisper) | [console.groq.com](https://console.groq.com) |
 | `gemini` | LLM (Gemini direct) | [aistudio.google.com](https://aistudio.google.com) |
@@ -643,6 +681,15 @@ That's it! Environment variables, model prefixing, config matching, and `nanobot
 
 </details>
 
+**Provider 实现选择：**
+
+在 `agents.defaults.provider` 中选择 LLM provider 实现：
+
+| Provider | 说明 |
+|----------|------|
+| `litellm` (默认) | 通过 LiteLLM 访问多个模型提供商 |
+| `openai` | 直接使用 OpenAI SDK，支持自定义端点和模型名称 |
+
 
 ### Security
 
@@ -652,6 +699,46 @@ That's it! Environment variables, model prefixing, config matching, and `nanobot
 |--------|---------|-------------|
 | `tools.restrictToWorkspace` | `false` | When `true`, restricts **all** agent tools (shell, file read/write/edit, list) to the workspace directory. Prevents path traversal and out-of-scope access. |
 | `channels.*.allowFrom` | `[]` (allow all) | Whitelist of user IDs. Empty = allow everyone; non-empty = only listed users can interact. |
+```json
+{
+  "agents": {
+    "defaults": {
+      "provider": "litellm",
+      "model": "anthropic/claude-opus-4-5"
+    }
+  },
+  "providers": {
+    "openrouter": {
+      "apiKey": "sk-or-v1-xxx"
+    },
+    "openai": {
+      "apiKey": "sk-xxx",
+      "apiBase": "https://api.openai.com/v1"
+    },
+    "groq": {
+      "apiKey": "gsk_xxx"
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "token": "123456:ABC...",
+      "allowFrom": ["123456789"],
+      "timeout": 120
+    },
+    "whatsapp": {
+      "enabled": false
+    }
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "apiKey": "BSA..."
+      }
+    }
+  }
+}
+```
 
 
 ## CLI Reference
