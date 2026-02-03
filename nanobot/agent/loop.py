@@ -19,7 +19,7 @@ from nanobot.agent.tools.message import MessageTool
 from nanobot.agent.tools.spawn import SpawnTool
 from nanobot.agent.tools.cron import CronTool
 from nanobot.agent.subagent import SubagentManager
-from nanobot.session.manager import SessionManager
+from nanobot.session.manager import SessionManager, Session
 
 
 class AgentLoop:
@@ -241,7 +241,11 @@ class AgentLoop:
         session.add_message("user", msg.content)
         session.add_message("assistant", final_content)
         self.sessions.save(session)
-        
+
+        # Check if summarization is needed
+        if len(session.messages) > 40:
+            asyncio.create_task(self._summarize_session(session))
+
         return OutboundMessage(
             channel=msg.channel,
             chat_id=msg.chat_id,
@@ -373,6 +377,61 @@ class AgentLoop:
             chat_id=chat_id,
             content=content
         )
-        
+
         response = await self._process_message(msg)
         return response.content if response else ""
+
+    async def _summarize_session(self, session: Session) -> None:
+        """
+        Summarize the session history to reduce context window usage.
+
+        Args:
+            session: The session to summarize.
+        """
+        try:
+            # Keep the last 10 messages, summarize the rest
+            keep_count = 10
+            if len(session.messages) <= keep_count:
+                return
+
+            to_summarize = session.messages[:-keep_count]
+            kept_messages = session.messages[-keep_count:]
+
+            logger.info(
+                f"Summarizing session {session.key}: collapsing {len(to_summarize)} messages"
+            )
+
+            # Build summarization prompt
+            prompt = (
+                "Please summarize the following conversation history into a concise paragraph. "
+            )
+            if session.summary:
+                prompt += f"incorporating the existing summary:\n{session.summary}\n\n"
+            else:
+                prompt += "Capture key details, decisions, and user preferences.\n\n"
+
+            prompt += "New messages to summarize:\n"
+            for m in to_summarize:
+                prompt += f"{m['role']}: {m['content']}\n"
+
+            # Call LLM for summary
+            # We use a simple message structure here
+            messages = [{"role": "user", "content": prompt}]
+
+            response = await self.provider.chat(
+                messages=messages,
+                tools=[],  # No tools needed for summarization
+                model=self.model,
+            )
+
+            new_summary = response.content
+
+            # Update session
+            session.summary = new_summary
+            session.messages = kept_messages
+            self.sessions.save(session)
+
+            logger.info(f"Session {session.key} summarized. New summary length: {len(new_summary)}")
+
+        except Exception as e:
+            logger.error(f"Error summarizing session {session.key}: {e}")
