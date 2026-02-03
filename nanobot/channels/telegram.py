@@ -100,10 +100,12 @@ class TelegramChannel(BaseChannel):
         
         self._running = True
         
-        # Build the application
+        # Build the application with increased timeout for thinking models
         self._app = (
             Application.builder()
             .token(self.config.token)
+            .connect_timeout(self.config.timeout)
+            .pool_timeout(self.config.timeout)
             .build()
         )
         
@@ -165,7 +167,10 @@ class TelegramChannel(BaseChannel):
             await self._app.bot.send_message(
                 chat_id=chat_id,
                 text=html_content,
-                parse_mode="HTML"
+                parse_mode="HTML",
+                read_timeout=self.config.timeout,
+                write_timeout=self.config.timeout,
+                connect_timeout=self.config.timeout
             )
         except ValueError:
             logger.error(f"Invalid chat_id: {msg.chat_id}")
@@ -175,7 +180,10 @@ class TelegramChannel(BaseChannel):
             try:
                 await self._app.bot.send_message(
                     chat_id=int(msg.chat_id),
-                    text=msg.content
+                    text=msg.content,
+                    read_timeout=self.config.timeout,
+                    write_timeout=self.config.timeout,
+                    connect_timeout=self.config.timeout
                 )
             except Exception as e2:
                 logger.error(f"Error sending Telegram message: {e2}")
