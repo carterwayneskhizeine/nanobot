@@ -205,11 +205,11 @@ def onboard():
     config = Config()
 
     # Step 1: Select provider implementation
-    console.print("\n[bold]选择 LLM Provider 实现:[/bold]")
-    console.print(" 1. LiteLLM (支持多个提供商)")
-    console.print(" 2. OpenAI SDK (直接连接 OpenAI 兼容 API)")
+    console.print("\n[bold]Select LLM Provider Implementation:[/bold]")
+    console.print(" 1. LiteLLM (supports multiple providers)")
+    console.print(" 2. OpenAI SDK (direct connection to OpenAI-compatible API)")
 
-    impl_choice = typer.prompt("输入选择", default="1")
+    impl_choice = typer.prompt("Enter choice", default="1")
 
     use_openai_sdk = impl_choice == "2"
 
@@ -217,10 +217,10 @@ def onboard():
         config.agents.defaults.provider = "openai"
 
         # Configure OpenAI SDK mode
-        console.print("\n[bold]配置 OpenAI SDK 模式[/bold]")
-        api_base = typer.prompt("输入 API Base URL (如 http://localhost:4000)", default="")
-        model = typer.prompt("输入模型名称 (如 GLM/glm-4.7-thinking-official)", default="gpt-4o")
-        api_key = typer.prompt("输入 API Key (可选，按 Enter 跳过)", default="", show_default=False)
+        console.print("\n[bold]Configure OpenAI SDK Mode[/bold]")
+        api_base = typer.prompt("Enter API Base URL (e.g., http://localhost:4000)", default="")
+        model = typer.prompt("Enter model name (e.g., GLM/glm-4.7-thinking-official)", default="gpt-4o")
+        api_key = typer.prompt("Enter API Key (optional, press Enter to skip)", default="", show_default=False)
 
         config.agents.defaults.model = model
         config.providers.openai.api_base = api_base if api_base else None
@@ -249,7 +249,7 @@ def onboard():
             api_key = typer.prompt("Enter your Zhipu AI API Key", hide_input=True)
             config.providers.zhipu.api_key = api_key
         elif selected_provider == "Anthropic":
-            config.agents.defaults.model = "anthropic/claude-3-5-sonnet-20240620"
+            config.agents.defaults.model = "claude-sonnet-4-5"
             api_key = typer.prompt("Enter your Anthropic API Key", hide_input=True)
             config.providers.anthropic.api_key = api_key
         elif selected_provider == "OpenAI":
@@ -257,7 +257,7 @@ def onboard():
             api_key = typer.prompt("Enter your OpenAI API Key", hide_input=True)
             config.providers.openai.api_key = api_key
         elif selected_provider == "Gemini":
-            config.agents.defaults.model = "gemini/gemini-1.5-pro"
+            config.agents.defaults.model = "gemini/gemini-3.0-pro"
             api_key = typer.prompt("Enter your Gemini API Key", hide_input=True)
             config.providers.gemini.api_key = api_key
         elif selected_provider == "Groq":
@@ -265,7 +265,7 @@ def onboard():
             api_key = typer.prompt("Enter your Groq API Key", hide_input=True)
             config.providers.groq.api_key = api_key
         else:  # OpenRouter
-            config.agents.defaults.model = "openrouter/anthropic/claude-3.5-sonnet"
+            config.agents.defaults.model = "openrouter/anthropic/claude-sonnet-4-5"
             api_key = typer.prompt("Enter your OpenRouter API Key", hide_input=True)
             config.providers.openrouter.api_key = api_key
 
@@ -282,7 +282,7 @@ def onboard():
     console.print(f"\n{__logo__} nanobot is ready!")
     console.print("\nNext steps:")
     if use_openai_sdk and not config.providers.openai.api_key:
-        console.print(" 1. 配置已保存，你可以直接使用 OpenAI SDK 模式")
+        console.print(" 1. Configuration saved, you can use OpenAI SDK mode directly")
     elif not use_openai_sdk and not any([config.providers.openrouter.api_key, config.providers.anthropic.api_key,
                 config.providers.openai.api_key, config.providers.zhipu.api_key,
                 config.providers.gemini.api_key, config.providers.groq.api_key]):
