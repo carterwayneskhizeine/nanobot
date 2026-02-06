@@ -162,18 +162,18 @@ nanobot agent -m "Hello from my local LLM!"
 > [!TIP]
 > The `apiKey` can be any non-empty string for local servers that don't require authentication.
 
-## 🔌 OpenAI SDK 模式
+## OpenAI SDK Mode
 
-直接连接任何 OpenAI 兼容的 API 端点，无需通过 LiteLLM。适用于自定义模型服务、本地部署或其他兼容 OpenAI API 格式的服务。
+Connect directly to any OpenAI-compatible API endpoint without going through LiteLLM. Suitable for custom model services, local deployments, or other services that are compatible with the OpenAI API format.
 
-**使用场景：**
-- 使用自定义端点（如 `http://localhost:4000`）
-- 使用特殊的模型名称（如 `GLM/glm-4.7-thinking-official`）
-- 需要直接访问模型 API，跳过 LiteLLM 的抽象层
+**Use Cases:**
+- Use custom endpoints (e.g., `http://localhost:4000`)
+- Use special model names (e.g., `GLM/glm-4.7-thinking-official`)
+- Need direct access to model APIs, skipping LiteLLM's abstraction layer
 
-**配置方式：**
+**Configuration:**
 
-在 `~/.nanobot/config.json` 中设置：
+Set in `~/.nanobot/config.json`:
 
 ```json
 {
@@ -192,13 +192,7 @@ nanobot agent -m "Hello from my local LLM!"
 }
 ```
 
-或者运行 `nanobot onboard`，在初始化时选择 **"OpenAI SDK"** 选项。
-
-**优势：**
-- ✅ 支持任何 OpenAI 兼容的 API
-- ✅ 保留自定义模型名称（不进行转换）
-- ✅ 更低的延迟（减少 LiteLLM 抽象层）
-- ✅ 易于调试（使用官方 SDK）
+Or run `nanobot onboard` and select the **"OpenAI SDK"** option during initialization.
 
 ## 💬 Chat Apps
 
@@ -393,14 +387,14 @@ Config file: `~/.nanobot/config.json`
 | `aihubmix` | LLM (API gateway, access to all models) | [aihubmix.com](https://aihubmix.com) |
 | `dashscope` | LLM (Qwen) | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
 
-**Provider 实现选择：**
+**Provider Implementation Selection:**
 
-在 `agents.defaults.provider` 中选择 LLM provider 实现：
+Select the LLM provider implementation in `agents.defaults.provider`:
 
-| Provider | 说明 |
-|----------|------|
-| `litellm` (默认) | 通过 LiteLLM 访问多个模型提供商 |
-| `openai` | 直接使用 OpenAI SDK，支持自定义端点和模型名称 |
+| Provider | Description |
+|----------|-------------|
+| `litellm` (default) | Access multiple model providers through LiteLLM |
+| `openai` | Directly use OpenAI SDK, supports custom endpoints and model names |
 
 
 ### Security
