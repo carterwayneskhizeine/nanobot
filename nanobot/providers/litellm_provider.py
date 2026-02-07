@@ -121,7 +121,7 @@ class LiteLLMProvider(LLMProvider):
             LLMResponse with content and/or tool calls.
         """
         model = self._resolve_model(model or self.default_model)
-        
+
         kwargs: dict[str, Any] = {
             "model": model,
             "messages": messages,
