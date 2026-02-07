@@ -143,6 +143,25 @@ class QQConfig(BaseModel):
     allow_from: list[str] = Field(default_factory=list)  # Allowed user openids (empty = public access)
 
 
+class DiscordConfig(BaseModel):
+    """Discord channel configuration."""
+    enabled: bool = False
+    token: str = ""  # Bot token from Discord Developer Portal
+    allow_from: list[str] = Field(default_factory=list)  # Allowed user IDs
+    gateway_url: str = "wss://gateway.discord.gg/?v=10&encoding=json"
+    intents: int = 37377  # GUILDS + GUILD_MESSAGES + DIRECT_MESSAGES + MESSAGE_CONTENT
+
+
+class FeishuConfig(BaseModel):
+    """Feishu/Lark channel configuration using WebSocket long connection."""
+    enabled: bool = False
+    app_id: str = ""  # App ID from Feishu Open Platform
+    app_secret: str = ""  # App Secret from Feishu Open Platform
+    encrypt_key: str = ""  # Encrypt Key for event subscription (optional)
+    verification_token: str = ""  # Verification Token for event subscription (optional)
+    allow_from: list[str] = Field(default_factory=list)  # Allowed user open_ids
+
+
 class ChannelsConfig(BaseModel):
     """Configuration for chat channels."""
     whatsapp: WhatsAppConfig = Field(default_factory=WhatsAppConfig)
