@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from telegram import BotCommand, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.request import HTTPXRequest
 
 from nanobot.bus.events import OutboundMessage
 from nanobot.bus.queue import MessageBus
@@ -120,14 +121,21 @@ class TelegramChannel(BaseChannel):
             return
         
         self._running = True
-
-        # Build the application with timeout and proxy support
-        builder = Application.builder().token(self.config.token)
+        
+        # Build the application with larger connection pool to avoid pool-timeout on long runs
+        timeout = getattr(self.config, 'timeout', 120)
+        req = HTTPXRequest(
+            connection_pool_size=16,
+            pool_timeout=5.0,
+            connect_timeout=timeout,
+            read_timeout=timeout
+        )
+        builder = Application.builder().token(self.config.token).request(req).get_updates_request(req)
         if self.config.proxy:
             builder = builder.proxy(self.config.proxy).get_updates_proxy(self.config.proxy)
-        builder = builder.connect_timeout(self.config.timeout).pool_timeout(self.config.timeout)
         self._app = builder.build()
-
+        self._app.add_error_handler(self._on_error)
+        
         # Add command handlers
         self._app.add_handler(CommandHandler("start", self._on_start))
         self._app.add_handler(CommandHandler("reset", self._on_reset))
@@ -192,6 +200,8 @@ class TelegramChannel(BaseChannel):
         # Stop typing indicator for this chat
         self._stop_typing(msg.chat_id)
         
+        timeout = getattr(self.config, 'timeout', 120)
+        
         try:
             # chat_id should be the Telegram chat ID (integer)
             chat_id = int(msg.chat_id)
@@ -201,9 +211,9 @@ class TelegramChannel(BaseChannel):
                 chat_id=chat_id,
                 text=html_content,
                 parse_mode="HTML",
-                read_timeout=self.config.timeout,
-                write_timeout=self.config.timeout,
-                connect_timeout=self.config.timeout
+                read_timeout=timeout,
+                write_timeout=timeout,
+                connect_timeout=timeout
             )
         except ValueError:
             logger.error(f"Invalid chat_id: {msg.chat_id}")
@@ -214,9 +224,9 @@ class TelegramChannel(BaseChannel):
                 await self._app.bot.send_message(
                     chat_id=int(msg.chat_id),
                     text=msg.content,
-                    read_timeout=self.config.timeout,
-                    write_timeout=self.config.timeout,
-                    connect_timeout=self.config.timeout
+                    read_timeout=timeout,
+                    write_timeout=timeout,
+                    connect_timeout=timeout
                 )
             except Exception as e2:
                 logger.error(f"Error sending Telegram message: {e2}")
@@ -340,7 +350,7 @@ class TelegramChannel(BaseChannel):
                         content_parts.append(f"[{media_type}: {file_path}]")
                 else:
                     content_parts.append(f"[{media_type}: {file_path}]")
-                    
+                
                 logger.debug(f"Downloaded {media_type} to {file_path}")
             except Exception as e:
                 logger.error(f"Failed to download media: {e}")
@@ -393,6 +403,10 @@ class TelegramChannel(BaseChannel):
         except Exception as e:
             logger.debug(f"Typing indicator stopped for {chat_id}: {e}")
     
+    async def _on_error(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Log polling / handler errors instead of silently swallowing them."""
+        logger.error(f"Telegram error: {context.error}")
+
     def _get_extension(self, media_type: str, mime_type: str | None) -> str:
         """Get file extension based on media type."""
         if mime_type:

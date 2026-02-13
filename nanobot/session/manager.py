@@ -15,15 +15,14 @@ from nanobot.utils.helpers import ensure_dir, safe_filename
 class Session:
     """
     A conversation session.
-
+    
     Stores messages in JSONL format for easy reading and persistence.
     """
-
+    
     key: str  # channel:chat_id
     messages: list[dict[str, Any]] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
-    summary: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
     
     def add_message(self, role: str, content: str, **kwargs: Any) -> None:
@@ -40,30 +39,18 @@ class Session:
     def get_history(self, max_messages: int = 50) -> list[dict[str, Any]]:
         """
         Get message history for LLM context.
-
+        
         Args:
             max_messages: Maximum messages to return.
-
+        
         Returns:
             List of messages in LLM format.
         """
         # Get recent messages
-        recent = (
-            self.messages[-max_messages:] if len(self.messages) > max_messages else self.messages
-        )
-
+        recent = self.messages[-max_messages:] if len(self.messages) > max_messages else self.messages
+        
         # Convert to LLM format (just role and content)
-        messages = [{"role": m["role"], "content": m["content"]} for m in recent]
-
-        # Prepend summary if exists
-        if self.summary:
-            summary_msg = {
-                "role": "system",
-                "content": f"Previous conversation summary:\n{self.summary}",
-            }
-            messages.insert(0, summary_msg)
-
-        return messages
+        return [{"role": m["role"], "content": m["content"]} for m in recent]
     
     def clear(self) -> None:
         """Clear all messages in the session."""
@@ -113,41 +100,34 @@ class SessionManager:
     def _load(self, key: str) -> Session | None:
         """Load a session from disk."""
         path = self._get_session_path(key)
-
+        
         if not path.exists():
             return None
-
+        
         try:
             messages = []
             metadata = {}
-            summary = ""
             created_at = None
-
+            
             with open(path) as f:
                 for line in f:
                     line = line.strip()
                     if not line:
                         continue
-
+                    
                     data = json.loads(line)
-
+                    
                     if data.get("_type") == "metadata":
                         metadata = data.get("metadata", {})
-                        summary = data.get("summary", "")
-                        created_at = (
-                            datetime.fromisoformat(data["created_at"])
-                            if data.get("created_at")
-                            else None
-                        )
+                        created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None
                     else:
                         messages.append(data)
-
+            
             return Session(
                 key=key,
                 messages=messages,
                 created_at=created_at or datetime.now(),
-                summary=summary,
-                metadata=metadata,
+                metadata=metadata
             )
         except Exception as e:
             logger.warning(f"Failed to load session {key}: {e}")
@@ -156,22 +136,21 @@ class SessionManager:
     def save(self, session: Session) -> None:
         """Save a session to disk."""
         path = self._get_session_path(session.key)
-
+        
         with open(path, "w") as f:
             # Write metadata first
             metadata_line = {
                 "_type": "metadata",
                 "created_at": session.created_at.isoformat(),
                 "updated_at": session.updated_at.isoformat(),
-                "summary": session.summary,
-                "metadata": session.metadata,
+                "metadata": session.metadata
             }
             f.write(json.dumps(metadata_line) + "\n")
-
+            
             # Write messages
             for msg in session.messages:
                 f.write(json.dumps(msg) + "\n")
-
+        
         self._cache[session.key] = session
     
     def delete(self, key: str) -> bool:

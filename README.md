@@ -16,10 +16,11 @@
 
 ⚡️ Delivers core agent functionality in just **~4,000** lines of code — **99% smaller** than Clawdbot's 430k+ lines.
 
-📏 Real-time line count: **3,510 lines** (run `bash core_agent_lines.sh` to verify anytime)
+📏 Real-time line count: **3,562 lines** (run `bash core_agent_lines.sh` to verify anytime)
 
 ## 📢 News
 
+- **2026-02-12** 🧠 Redesigned memory system — Less code, more reliable. Join the [discussion](https://github.com/HKUDS/nanobot/discussions/566) about it!
 - **2026-02-10** 🎉 Released v0.1.3.post6 with improvements! Check the updates [notes](https://github.com/HKUDS/nanobot/releases/tag/v0.1.3.post6) and our [roadmap](https://github.com/HKUDS/nanobot/discussions/431).
 - **2026-02-09** 💬 Added Slack, Email, and QQ support — nanobot now supports multiple chat platforms!
 - **2026-02-08** 🔧 Refactored Providers—adding a new LLM provider now takes just 2 simple steps! Check [here](#providers).
@@ -166,7 +167,7 @@ nanobot agent -m "Hello from my local LLM!"
 > [!TIP]
 > The `apiKey` can be any non-empty string for local servers that don't require authentication.
 
-## OpenAI SDK Mode
+## 🤖 OpenAI SDK Mode
 
 Connect directly to any OpenAI-compatible API endpoint without going through LiteLLM. Suitable for custom model services, local deployments, or other services that are compatible with the OpenAI API format.
 
@@ -197,6 +198,15 @@ Set in `~/.nanobot/config.json`:
 ```
 
 Or run `nanobot onboard` and select the **"OpenAI SDK"** option during initialization.
+
+**Provider Implementation Selection:**
+
+Select the LLM provider implementation in `agents.defaults.provider`:
+
+| Provider | Description |
+|----------|-------------|
+| `litellm` (default) | Access multiple model providers through LiteLLM |
+| `openai` | Directly use OpenAI SDK, supports custom endpoints and model names |
 
 ## 💬 Chat Apps
 
@@ -230,7 +240,8 @@ Talk to your nanobot through Telegram, Discord, WhatsApp, Feishu, Mochat, DingTa
     "telegram": {
       "enabled": true,
       "token": "YOUR_BOT_TOKEN",
-      "allowFrom": ["YOUR_USER_ID"]
+      "allowFrom": ["YOUR_USER_ID"],
+      "timeout": 120
     }
   }
 }
@@ -238,6 +249,8 @@ Talk to your nanobot through Telegram, Discord, WhatsApp, Feishu, Mochat, DingTa
 
 > You can find your **User ID** in Telegram settings. It is shown as `@yourUserId`.
 > Copy this value **without the `@` symbol** and paste it into the config file.
+
+> `timeout`: Request timeout in seconds for Telegram API calls (default: 120).
 
 
 **3. Run**
@@ -605,6 +618,17 @@ nanobot gateway
 
 </details>
 
+## 🌐 Agent Social Network
+
+🐈 nanobot is capable of linking to the agent social network (agent community). **Just send one message and your nanobot joins automatically!**
+
+| Platform | How to Join (send this message to your bot) |
+|----------|-------------|
+| [**Moltbook**](https://www.moltbook.com/) | `Read https://moltbook.com/skill.md and follow the instructions to join Moltbook` |
+| [**ClawdChat**](https://clawdchat.ai/) | `Read https://clawdchat.ai/skill.md and follow the instructions to join ClawdChat` |
+
+Simply send the command above to your nanobot (via CLI or any chat channel), and it will handle the rest.
+
 ## ⚙️ Configuration
 
 Config file: `~/.nanobot/config.json`
@@ -675,15 +699,6 @@ That's it! Environment variables, model prefixing, config matching, and `nanobot
 
 </details>
 
-**Provider Implementation Selection:**
-
-Select the LLM provider implementation in `agents.defaults.provider`:
-
-| Provider | Description |
-|----------|-------------|
-| `litellm` (default) | Access multiple model providers through LiteLLM |
-| `openai` | Directly use OpenAI SDK, supports custom endpoints and model names |
-
 
 ### Security
 
@@ -693,46 +708,6 @@ Select the LLM provider implementation in `agents.defaults.provider`:
 |--------|---------|-------------|
 | `tools.restrictToWorkspace` | `false` | When `true`, restricts **all** agent tools (shell, file read/write/edit, list) to the workspace directory. Prevents path traversal and out-of-scope access. |
 | `channels.*.allowFrom` | `[]` (allow all) | Whitelist of user IDs. Empty = allow everyone; non-empty = only listed users can interact. |
-```json
-{
-  "agents": {
-    "defaults": {
-      "provider": "litellm",
-      "model": "anthropic/claude-opus-4-5"
-    }
-  },
-  "providers": {
-    "openrouter": {
-      "apiKey": "sk-or-v1-xxx"
-    },
-    "openai": {
-      "apiKey": "sk-xxx",
-      "apiBase": "https://api.openai.com/v1"
-    },
-    "groq": {
-      "apiKey": "gsk_xxx"
-    }
-  },
-  "channels": {
-    "telegram": {
-      "enabled": true,
-      "token": "123456:ABC...",
-      "allowFrom": ["123456789"],
-      "timeout": 120
-    },
-    "whatsapp": {
-      "enabled": false
-    }
-  },
-  "tools": {
-    "web": {
-      "search": {
-        "apiKey": "BSA..."
-      }
-    }
-  }
-}
-```
 
 
 ## CLI Reference
